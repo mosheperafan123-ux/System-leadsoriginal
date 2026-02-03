@@ -34,26 +34,24 @@ class MessageGenerator {
             - No vendemos "chatbots". Creamos sistemas de software de propiedad privada que transforman la captación y seguimiento de pacientes.
             - Exclusividad: Solo aceptamos 3 proyectos este trimestre para garantizar calidad boutique.
 
-            Estructura del Email (Autoridad y Escasez):
-            1. Contexto: Menciona su negocio y ciudad (${lead.city || 'local'}) para mostrar research.
-            2. El Problema Real: "La mayoría de clínicas pierden el 40% de ventas por seguimiento manual o lento".
-            3. Nuestra Solución (Private Tech): "Desarrollamos sistemas de recepción inteligentes a medida que aseguran que cada lead sea atendido, calificado y agendado al instante."
-            4. Escasez Real: "Abrimos cupo para 3 únicos proyectos de infraestructura a medida este trimestre."
-            5. CTA (Soft pero firme): "Si os interesa ver cómo opera una infraestructura así, aquí tenéis el detalle: ${config.LANDING_PAGE_URL}"
+            Estructura del Email (Estricta):
+            Debes seguir EXACTAMENTE esta estructura y tono. No inventes saludos raros ni menciones ratings.
+
+            "Hola ${lead.business_name}. La mayoría de clínicas pierden el 40% de ventas por seguimiento manual. En AR Technocode desarrollamos infraestructuras privadas de recepción que corrigen esto al instante. Abrimos cupo para 3 únicos proyectos a medida este trimestre. Si os interesa ver cómo opera, mirad el detalle aquí: ${config.LANDING_PAGE_URL}"
 
             Reglas:
-            - Tono: Sofisticado, tecnológico, 'high-end'. Español de España.
-            - MÁXIMO 80 palabras.
-            - NUNCA digas "agencia de IA" ni "chatbot". Usa "Infraestructura", "Sistema a medida", "Private Tech".
-            - Asunto: Serio y exclusivo. Ej: "Infraestructura privada para ${lead.business_name}", "Propuesta de Private Tech", "Cupo T1: ${lead.business_name}".`
+            - NO menciones ratings, estrellas ni reseñas.
+            - Mantenlo corto y directo (máximo 60 palabras).
+            - Tono: Profesional, directo, 'high-end'.
+            - Asunto: "Infraestructura Privada | ${lead.business_name}" o "Propuesta T1 | ${lead.business_name}"
                     },
                     {
                         role: "user",
                         content: `Redacta la invitación exclusiva para:
-            Negocio: ${lead.business_name}
-            Nicho: ${lead.category || 'Salud/Belleza'}
-            Ciudad: ${lead.city || 'España'}
-            Rating: ${lead.rating || 'N/A'}`
+                            Negocio: ${ lead.business_name }
+            Nicho: ${ lead.category || 'Salud/Belleza' }
+            Ciudad: ${ lead.city || 'España' }
+            Rating: ${ lead.rating || 'N/A' }`
                     }
                 ],
                 temperature: 0.7,
@@ -69,7 +67,7 @@ class MessageGenerator {
 
     getMockMessage(lead) {
         // Si no hay API Key, no generar mensaje (evita enviar emails de prueba)
-        console.warn(chalk.yellow(`  ⚠ No se pudo generar mensaje para ${lead.business_name} - Sin API Key`));
+        console.warn(chalk.yellow(`  ⚠ No se pudo generar mensaje para ${ lead.business_name } - Sin API Key`));
         return null;
     }
 }
