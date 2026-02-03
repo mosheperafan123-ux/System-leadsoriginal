@@ -41,14 +41,40 @@ class GoogleMapsScraper {
         const cityMatch = keyword.match(/en\s+(.+?)(?:\s*,|$)/i);
         const searchCity = cityMatch ? cityMatch[1].trim() : '';
 
-        await this.page.goto(`https://www.google.com/maps/search/${encodeURIComponent(keyword)}`);
+        await this.page.goto(`https://www.google.com/maps/search/${encodeURIComponent(keyword)}`, {
+            waitUntil: 'domcontentloaded',
+            timeout: 30000
+        });
 
-        // Esperar lista de resultados
+        // Manejar dialogo de cookies de Google (GDPR - Europa)
         try {
-            await this.page.waitForSelector('div[role="feed"]', { timeout: 15000 });
+            const acceptButton = await this.page.$('button[aria-label*="Aceptar"], button[aria-label*="Accept"], form[action*="consent"] button');
+            if (acceptButton) {
+                console.log(chalk.gray('  -> Aceptando cookies...'));
+                await acceptButton.click();
+                await this.page.waitForTimeout(2000);
+            }
         } catch (e) {
-            console.log(chalk.red('No se encontraron resultados.'));
-            return [];
+            // Cookie dialog may not appear, continue
+        }
+
+        // Esperar que la página cargue completamente
+        await this.page.waitForTimeout(3000);
+
+        // Esperar lista de resultados (múltiples selectores)
+        try {
+            await this.page.waitForSelector('div[role="feed"], div.Nv2PK, div[aria-label*="Resultados"]', { timeout: 20000 });
+        } catch (e) {
+            // Intentar scroll por si la página cargó pero el feed no apareció
+            await this.page.evaluate(() => window.scrollBy(0, 300));
+            await this.page.waitForTimeout(2000);
+
+            // Segundo intento
+            const hasFeed = await this.page.$('div[role="feed"], div.Nv2PK, a[href*="/maps/place/"]');
+            if (!hasFeed) {
+                console.log(chalk.red('No se encontraron resultados.'));
+                return [];
+            }
         }
 
         let leads = [];
