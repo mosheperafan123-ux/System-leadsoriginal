@@ -53,7 +53,7 @@ Nicho: ${lead.category || 'Salud/Belleza'}
 Ciudad: ${lead.city || 'España'}`
                     }
                 ],
-                temperature: 0.7,
+                // temperature: 0.7, // Comentado porque el modelo o1 no soporta temperatura personalizada
             });
 
             return completion.choices[0].message.content;
