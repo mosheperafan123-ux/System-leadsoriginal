@@ -25,7 +25,8 @@ RUN apt-get update && apt-get install -y \
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Instalar Playwright browsers
+# Configurar Playwright en ruta global
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN npx playwright install chromium
 
 COPY . .
@@ -57,7 +58,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app .
-COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
+COPY --from=builder /ms-playwright /ms-playwright
+
+# Variables de entorno
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # Variables de entorno
 ENV NODE_ENV=production
