@@ -677,6 +677,10 @@
                 <button id="btn-test" onclick="runTest()" class="control-btn" style="background:#f59e0b; color:white;">
                     🧪 Prueba (10 Leads)
                 </button>
+                <button id="btn-rescue" onclick="rescueEmails()" class="control-btn"
+                    style="background:#f97316; color:white; display:flex; align-items:center; gap:6px;">
+                    🚑 Rescatar (Pendientes)
+                </button>
             </div>
         </section>
 
@@ -1051,6 +1055,31 @@
             }
             btn.disabled = false;
             btn.textContent = '🧪 Prueba (10 Leads)';
+        }
+
+        async function rescueEmails() {
+            if (!confirm('¿Intentar enviar emails a los leads pendientes que ya tienen mensaje generado?')) return;
+            const btn = document.getElementById('btn-rescue');
+            btn.disabled = true;
+            btn.innerHTML = '🚑 Enviando...';
+
+            try {
+                const res = await fetch('/api/rescue-emails', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert(`✅ ${data.message}`);
+                } else {
+                    alert(`❌ ${data.message}`);
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '🚑 Rescatar (Pendientes)';
+                }, 3000);
+            }
         }
 
         // Init

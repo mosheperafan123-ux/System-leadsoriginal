@@ -682,6 +682,68 @@ app.post('/api/test-run', (req, res) => {
     }
 });
 
+// Rescue Pending Emails (Manual Retry)
+app.post('/api/rescue-emails', async (req, res) => {
+    try {
+        if (!gmailSender.getStats().accountsConfigured) {
+            return res.json({ success: false, message: 'Gmail no está configurado o no hay cuentas.' });
+        }
+
+        // 1. Get pending leads that have a message but no email sent
+        const pendingLeads = db.prepare(`
+            SELECT * FROM leads 
+            WHERE ai_personalized_message IS NOT NULL 
+            AND ai_personalized_message NOT LIKE '%[SIMULACIÓN%' 
+            AND email_sent = 0 
+            AND email IS NOT NULL 
+            LIMIT 20
+        `).all();
+
+        if (pendingLeads.length === 0) {
+            return res.json({ success: true, message: 'No hay leads pendientes por rescatar.', count: 0 });
+        }
+
+        console.log(`[RESCUE] Rescatando ${pendingLeads.length} leads...`);
+
+        // 2. Process in background to avoid timeout
+        (async () => {
+            let successCount = 0;
+            for (const lead of pendingLeads) {
+                try {
+                    const subjectMatch = lead.ai_personalized_message.match(/Asunto:\s*(.+)/i);
+                    const subject = subjectMatch ? subjectMatch[1].trim() : `Oportunidad para ${lead.business_name}`;
+                    const body = lead.ai_personalized_message.replace(/Asunto:.*\n?/i, '');
+
+                    console.log(`[RESCUE] Enviando a ${lead.business_name}...`);
+                    const sent = await gmailSender.sendEmail(lead.email, subject, body, lead);
+
+                    if (sent) {
+                        db.prepare('UPDATE leads SET email_sent = 1, email_sent_at = CURRENT_TIMESTAMP WHERE id = ?').run(lead.id);
+                        successCount++;
+                    }
+
+                    // Random delay 2-5s
+                    const delay = Math.floor(Math.random() * 3000) + 2000;
+                    await new Promise(r => setTimeout(r, delay));
+
+                } catch (err) {
+                    console.error(`[RESCUE ERROR] Lead ${lead.id}:`, err.message);
+                }
+            }
+            console.log(`[RESCUE] Completado. Enviados: ${successCount}/${pendingLeads.length}`);
+        })();
+
+        res.json({
+            success: true,
+            message: `Iniciando envío a ${pendingLeads.length} leads en segundo plano.`,
+            count: pendingLeads.length
+        });
+
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 // Auto-start check
 if (process.env.AUTO_START_SCHEDULER === 'true') {
     console.log('🔄 Auto-starting scheduler per configuration...');
