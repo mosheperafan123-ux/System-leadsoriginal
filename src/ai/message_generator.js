@@ -43,15 +43,14 @@ class MessageGenerator {
             - NO menciones ratings, estrellas ni reseñas.
             - Mantenlo corto y directo (máximo 60 palabras).
             - Tono: Profesional, directo, 'high-end'.
-            - Asunto: "Infraestructura Privada | ${lead.business_name}" o "Propuesta T1 | ${lead.business_name}"
+            - Asunto: "Infraestructura Privada | ${lead.business_name}" o "Propuesta T1 | ${lead.business_name}"`
                     },
                     {
                         role: "user",
                         content: `Redacta la invitación exclusiva para:
-                            Negocio: ${ lead.business_name }
-            Nicho: ${ lead.category || 'Salud/Belleza' }
-            Ciudad: ${ lead.city || 'España' }
-            Rating: ${ lead.rating || 'N/A' }`
+Negocio: ${lead.business_name}
+Nicho: ${lead.category || 'Salud/Belleza'}
+Ciudad: ${lead.city || 'España'}`
                     }
                 ],
                 temperature: 0.7,
@@ -67,7 +66,7 @@ class MessageGenerator {
 
     getMockMessage(lead) {
         // Si no hay API Key, no generar mensaje (evita enviar emails de prueba)
-        console.warn(chalk.yellow(`  ⚠ No se pudo generar mensaje para ${ lead.business_name } - Sin API Key`));
+        console.warn(chalk.yellow(`  ⚠ No se pudo generar mensaje para ${lead.business_name} - Sin API Key`));
         return null;
     }
 }
