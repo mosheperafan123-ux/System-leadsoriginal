@@ -82,8 +82,13 @@ async function runAIGenerationCycle() {
     for (const lead of pendingLeads) {
         try {
             const message = await generator.generateMessage(lead);
-            db.prepare('UPDATE leads SET ai_personalized_message = ? WHERE id = ?').run(message, lead.id);
-            process.stdout.write(chalk.green('.'));
+            // Solo guardar si el mensaje se generó correctamente
+            if (message && !message.includes('[SIMULACIÓN')) {
+                db.prepare('UPDATE leads SET ai_personalized_message = ? WHERE id = ?').run(message, lead.id);
+                process.stdout.write(chalk.green('.'));
+            } else {
+                process.stdout.write(chalk.yellow('?')); // Mensaje no generado
+            }
         } catch (err) {
             process.stdout.write(chalk.red('x'));
         }

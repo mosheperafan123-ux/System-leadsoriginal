@@ -62,18 +62,15 @@ class MessageGenerator {
             return completion.choices[0].message.content;
         } catch (error) {
             console.error(chalk.red('Error generando mensaje con IA:'), error.message);
-            return this.getMockMessage(lead);
+            // CRÍTICO: Retornar null para evitar enviar emails con contenido de prueba
+            return null;
         }
     }
 
     getMockMessage(lead) {
-        return `[SIMULACIÓN SIN OPENAI KEY]
-Asunto: Oportunidad para ${lead.business_name}
-
-Hola equipo de ${lead.business_name},
-
-Vi que tienen un excelente rating de ${lead.rating}. Quería comentarles sobre nuestro sistema de automatización...
-(Configura tu API Key para ver mensajes reales)`;
+        // Si no hay API Key, no generar mensaje (evita enviar emails de prueba)
+        console.warn(chalk.yellow(`  ⚠ No se pudo generar mensaje para ${lead.business_name} - Sin API Key`));
+        return null;
     }
 }
 
