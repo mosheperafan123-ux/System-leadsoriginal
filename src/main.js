@@ -18,11 +18,11 @@ async function main() {
         const scraper = new GoogleMapsScraper();
 
         const keywords = [
-            'Restaurantes en Bogotá',
-            'Clínicas dentales en Medellín',
-            'Hoteles en Cartagena',
-            'Spas en Bogotá',
-            'Agencias de marketing en Cali'
+            'Clínicas dentales en Madrid',
+            'Clínicas estéticas en Barcelona',
+            'Salones de belleza en Valencia',
+            'Odontólogos en Sevilla',
+            'Centros de estética en Málaga'
         ];
         const target = keywords[Math.floor(Math.random() * keywords.length)];
 

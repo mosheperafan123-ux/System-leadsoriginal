@@ -20,8 +20,8 @@ class GoogleMapsScraper {
         });
         this.context = await this.browser.newContext({
             viewport: { width: 1280, height: 720 },
-            locale: 'es-CO',
-            geolocation: { longitude: -74.0721, latitude: 4.7110 },
+            locale: 'es-ES',
+            geolocation: { longitude: -3.7038, latitude: 40.4168 }, // Madrid
             permissions: ['geolocation']
         });
         this.page = await this.context.newPage();

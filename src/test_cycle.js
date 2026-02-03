@@ -14,8 +14,12 @@ async function runTestCycle() {
         console.log(chalk.blue('\n[1/4] Extracción de Leads (Test Limit: 10)...'));
         const scraper = new GoogleMapsScraper();
 
-        // Use a generic test keyword
-        const keywords = ['Restaurantes en Madrid', 'Clinicas dentales en Bogota', 'Hoteles en Ciudad de Mexico'];
+        // Use target niches for Spain
+        const keywords = [
+            'Clínicas dentales en Madrid',
+            'Clínicas estéticas en Barcelona',
+            'Salones de belleza en Sevilla'
+        ];
         const target = keywords[Math.floor(Math.random() * keywords.length)];
 
         await scraper.scrape(target, 10);
