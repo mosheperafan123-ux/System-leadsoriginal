@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  leadgen:
+    build: .
+    container_name: leadgen-ai
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_FILE=/app/data/leads.db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GMAIL_CLIENT_ID=${GMAIL_CLIENT_ID}
+      - GMAIL_CLIENT_SECRET=${GMAIL_CLIENT_SECRET}
+      - GMAIL_REDIRECT_URI=${GMAIL_REDIRECT_URI}
+      - GMAIL_REFRESH_TOKEN=${GMAIL_REFRESH_TOKEN}
+      - EMAIL_PROFILES=${EMAIL_PROFILES}
+      - HEADLESS_MODE=true
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/stats" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3

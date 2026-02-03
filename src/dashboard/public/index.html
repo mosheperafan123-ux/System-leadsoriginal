@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadGen AI | Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-light: #f8f9fc;
+            --bg-white: #ffffff;
+            --accent-blue: #0066ff;
+            --accent-purple: #7c3aed;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --text-dark: #1a1a2e;
+            --text-gray: #6b7280;
+            --text-light: #9ca3af;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.06);
+            --shadow-hover: 0 12px 40px rgba(0, 102, 255, 0.15);
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            --radius-full: 9999px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ========== ANIMATED AURA BACKGROUND ========== */
+        .aura-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background: var(--bg-light);
+        }
+
+        .aura-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.6;
+            animation: auraFloat 20s ease-in-out infinite;
+        }
+
+        .aura-1 {
+            width: 600px;
+            height: 600px;
+            background: linear-gradient(135deg, #0066ff40, #00d4ff30);
+            top: -200px;
+            right: -200px;
+            animation-delay: 0s;
+        }
+
+        .aura-2 {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #7c3aed30, #ec489930);
+            bottom: -150px;
+            left: -150px;
+            animation-delay: -7s;
+        }
+
+        .aura-3 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, #10b98130, #0066ff20);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+        }
+
+        @keyframes auraFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(30px, -30px) scale(1.1);
+            }
+
+            50% {
+                transform: translate(-20px, 20px) scale(0.95);
+            }
+
+            75% {
+                transform: translate(15px, 15px) scale(1.05);
+            }
+        }
+
+        /* ========== FLOATING NAV ========== */
+        .floating-nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: var(--shadow-soft);
+            z-index: 1000;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        .nav-logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .nav-item {
+            padding: 10px 18px;
+            border-radius: var(--radius-full);
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            color: var(--text-dark);
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        .nav-item.active {
+            background: var(--text-dark);
+            color: white;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border-radius: var(--radius-full);
+            background: var(--accent-blue);
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.3);
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .main {
+            padding: 100px 40px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--text-dark), var(--accent-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-gray);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* ========== STATS GRID ========== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: 28px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(0, 102, 255, 0.2);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card.purple::before {
+            background: linear-gradient(90deg, var(--accent-purple), #ec4899);
+        }
+
+        .stat-card.green::before {
+            background: linear-gradient(90deg, var(--accent-green), #06b6d4);
+        }
+
+        .stat-card.orange::before {
+            background: linear-gradient(90deg, var(--accent-orange), #ef4444);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), rgba(0, 102, 255, 0.05));
+        }
+
+        .stat-card.purple .stat-icon {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(124, 58, 237, 0.05));
+        }
+
+        .stat-card.green .stat-icon {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+        }
+
+        .stat-card.orange .stat-icon {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            line-height: 1;
+        }
+
+        .stat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+        }
+
+        /* ========== PANELS ========== */
+        .panels {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 24px 28px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.03);
+            padding: 4px;
+            border-radius: var(--radius-full);
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--text-gray);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+        }
+
+        .filter-tab.active {
+            background: white;
+            color: var(--text-dark);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        /* ========== TABLE ========== */
+        .leads-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leads-table th {
+            text-align: left;
+            padding: 16px 24px;
+            color: var(--text-light);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .leads-table td {
+            padding: 18px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+            font-size: 0.95rem;
+        }
+
+        .leads-table tr {
+            transition: all 0.2s ease;
+        }
+
+        .leads-table tr:hover td {
+            background: rgba(0, 102, 255, 0.02);
+        }
+
+        .lead-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            display: block;
+        }
+
+        .lead-category {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .email-link {
+            color: var(--accent-blue);
+            font-weight: 500;
+        }
+
+        .no-email {
+            color: var(--text-light);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+            color: var(--accent-green);
+        }
+
+        .badge-pending {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+            color: var(--accent-orange);
+        }
+
+        .badge-none {
+            background: rgba(0, 0, 0, 0.04);
+            color: var(--text-light);
+        }
+
+        /* ========== ACTIVITY PANEL ========== */
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+            transition: all 0.2s ease;
+        }
+
+        .activity-item:hover {
+            background: rgba(0, 102, 255, 0.02);
+        }
+
+        .activity-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, rgba(0, 102, 255, 0.1), rgba(0, 102, 255, 0.05));
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-light);
+        }
+
+        /* ========== ARROW ICON ========== */
+        .arrow-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            color: white;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover .arrow-icon {
+            transform: translate(3px, -3px);
+        }
+
+        /* ========== SCROLLBAR ========== */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 3px;
+        }
+
+        .scheduler-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .scheduler-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .scheduler-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scheduler-label {
+            font-size: 0.8rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .scheduler-time {
+            font-size: 1.1rem;
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 8px;
+            background: #f3f4f6;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: #e5e7eb;
+            transform: scale(1.1);
+        }
+
+        .action-btn.danger:hover {
+            background: #fee2e2;
+        }
+
+        /* Control Buttons */
+        .control-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn.start {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .control-btn.start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .control-btn.stop {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .control-btn.stop:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Animated Aura Background -->
+    <div class="aura-bg">
+        <div class="aura-glow aura-1"></div>
+        <div class="aura-glow aura-2"></div>
+        <div class="aura-glow aura-3"></div>
+    </div>
+
+    <!-- Floating Navigation -->
+    <nav class="floating-nav">
+        <div class="nav-logo">
+            <div class="nav-logo-icon">⚡</div>
+            LeadGen AI
+        </div>
+        <div class="nav-item active">Dashboard</div>
+        <div class="nav-item">Leads</div>
+        <div class="nav-item">Analytics</div>
+        <a href="/api/export/csv" class="nav-btn">
+            📥 Exportar
+        </a>
+    </nav>
+
+    <main class="main">
+        <header class="header">
+            <h1>Command Center</h1>
+            <p>Tu panel de control para gestionar y contactar leads extraídos automáticamente.</p>
+        </header>
+
+        <!-- Scheduler Control Panel -->
+        <section class="control-panel"
+            style="display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg, #1a1a2e, #0f0f23); border-radius:20px; padding:20px 30px; margin-bottom:24px; color:white;">
+            <div style="display:flex; align-items:center; gap:20px;">
+                <div>
+                    <span style="font-size:0.85rem; opacity:0.7;">Estado del Sistema</span>
+                    <h2 id="scheduler-status-text" style="font-size:1.4rem; margin:4px 0 0;">⏸️ Detenido</h2>
+                </div>
+                <div id="uptime-container"
+                    style="display:none; padding-left:20px; border-left:1px solid rgba(255,255,255,0.2);">
+                    <span style="font-size:0.85rem; opacity:0.7;">Tiempo activo</span>
+                    <div id="scheduler-uptime" style="font-size:1.2rem; font-weight:600;">00:00:00</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:12px;">
+                <button id="btn-start" onclick="startScheduler()" class="control-btn start">
+                    ▶️ Iniciar Sistema
+                </button>
+                <button id="btn-stop" onclick="stopScheduler()" class="control-btn stop" style="display:none;">
+                    ⏹️ Detener Sistema
+                </button>
+                <button id="btn-test" onclick="runTest()" class="control-btn" style="background:#f59e0b; color:white;">
+                    🧪 Prueba (10 Leads)
+                </button>
+            </div>
+        </section>
+
+        <section class="scheduler-grid"
+            style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px;">
+            <div class="scheduler-card">
+                <div class="scheduler-icon">🔍</div>
+                <div class="scheduler-info">
+                    <span class="scheduler-label">Próximo Scraping</span>
+                    <span class="scheduler-time" id="next-scraping">--:--</span>
+                </div>
+            </div>
+            <div class="scheduler-card">
+                <div class="scheduler-icon">🧠</div>
+                <div class="scheduler-info">
+                    <span class="scheduler-label">Próxima IA</span>
+                    <span class="scheduler-time" id="next-ai">--:--</span>
+                </div>
+            </div>
+            <div class="scheduler-card">
+                <div class="scheduler-icon">📨</div>
+                <div class="scheduler-info">
+                    <span class="scheduler-label">Próximo Envío</span>
+                    <span class="scheduler-time" id="next-email">--:--</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-label">Total Leads</div>
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-badge">
+                    <span>↗</span> Base de datos
+                </div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-icon">📧</div>
+                <div class="stat-label">Con Email</div>
+                <div class="stat-value" id="stat-emails">0</div>
+                <div class="stat-badge" style="background:rgba(124,58,237,0.1); color:var(--accent-purple);">
+                    <span>✓</span> Listos
+                </div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-icon">✅</div>
+                <div class="stat-label">Contactados</div>
+                <div class="stat-value" id="stat-contacted">0</div>
+                <div class="stat-badge">
+                    <span>↗</span> Enviados
+                </div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-label">En Cola</div>
+                <div class="stat-value" id="stat-pending">0</div>
+                <div class="stat-badge" style="background:rgba(245,158,11,0.1); color:var(--accent-orange);">
+                    <span>→</span> Pendientes
+                </div>
+            </div>
+        </section>
+
+        <section class="panels">
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span>📋</span> Leads Recientes
+                    </span>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <input type="text" id="search-input" placeholder="🔍 Buscar..."
+                            style="padding:8px 16px; border:1px solid #e5e7eb; border-radius:20px; font-size:0.9rem; width:200px;">
+                        <div class="filter-tabs">
+                            <button class="filter-tab active" data-filter="all">Todos</button>
+                            <button class="filter-tab" data-filter="pending">Pendientes</button>
+                            <button class="filter-tab" data-filter="contacted">Contactados</button>
+                            <button class="filter-tab" data-filter="responded">Respondieron</button>
+                        </div>
+                    </div>
+                </div>
+                <table class="leads-table">
+                    <thead>
+                        <tr>
+                            <th>Negocio</th>
+                            <th>Email</th>
+                            <th>Ciudad</th>
+                            <th>Estado</th>
+                            <th>Respuesta</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leads-tbody">
+                        <tr>
+                            <td colspan="6" class="empty-state">Cargando datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span>📡</span> Actividad
+                    </span>
+                </div>
+                <div id="activity-list">
+                    <div class="empty-state">Cargando...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                document.getElementById('stat-total').textContent = data.total_leads;
+                document.getElementById('stat-emails').textContent = data.with_email;
+                document.getElementById('stat-contacted').textContent = data.emails_sent;
+                document.getElementById('stat-pending').textContent = data.pending_contact;
+
+                // Actualizar tiempos
+                if (data.next_runs) {
+                    const formatTime = (iso) => new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                    document.getElementById('next-scraping').textContent = formatTime(data.next_runs.scraping);
+                    document.getElementById('next-ai').textContent = formatTime(data.next_runs.ai);
+                    document.getElementById('next-email').textContent = formatTime(data.next_runs.email);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchLeads(filter = 'all') {
+            try {
+                let url = '/api/leads?limit=20';
+                if (filter === 'pending') url += '&status=pending';
+                if (filter === 'contacted') url += '&status=contacted';
+                if (filter === 'responded') url = '/api/leads/responded';
+
+                const res = await fetch(url);
+                const leads = await res.json();
+
+                renderLeads(leads);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderLeads(leads) {
+            const tbody = document.getElementById('leads-tbody');
+            if (leads.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay leads</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = leads.map(lead => `
+                <tr data-id="${lead.id}">
+                    <td>
+                        <span class="lead-name">${lead.business_name}</span>
+                        <span class="lead-category">${lead.category || 'Sin categoría'}</span>
+                    </td>
+                    <td class="${lead.email ? 'email-link' : 'no-email'}">
+                        ${lead.email || '—'}
+                    </td>
+                    <td>${lead.city || '—'}</td>
+                    <td>
+                        ${lead.email_sent
+                    ? '<span class="badge badge-success">✓ Contactado</span>'
+                    : lead.email
+                        ? '<span class="badge badge-pending">⏳ Pendiente</span>'
+                        : '<span class="badge badge-none">Sin Email</span>'}
+                    </td>
+                    <td>
+                        ${getResponseBadge(lead.response_status)}
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:6px;">
+                            <button onclick="showMessageModal(${lead.id})" class="action-btn" title="Ver mensaje">💬</button>
+                            <button onclick="showResponseModal(${lead.id})" class="action-btn" title="Registrar respuesta">✉️</button>
+                            <button onclick="deleteLead(${lead.id})" class="action-btn danger" title="Eliminar">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getResponseBadge(status) {
+            if (!status || status === 'none') return '<span class="badge badge-none">—</span>';
+            if (status === 'responded') return '<span class="badge badge-success">✅ Respondió</span>';
+            if (status === 'interested') return '<span class="badge" style="background:#dcfce7;color:#16a34a;">🔥 Interesado</span>';
+            if (status === 'not_interested') return '<span class="badge" style="background:#fee2e2;color:#dc2626;">❌ No interesado</span>';
+            return '<span class="badge badge-none">' + status + '</span>';
+        }
+
+        async function searchLeads() {
+            const q = document.getElementById('search-input').value;
+            if (!q) { fetchLeads(); return; }
+
+            const res = await fetch('/api/leads/search?q=' + encodeURIComponent(q));
+            const leads = await res.json();
+            renderLeads(leads);
+        }
+
+        async function deleteLead(id) {
+            if (!confirm('¿Eliminar este lead?')) return;
+            await fetch('/api/leads/' + id, { method: 'DELETE' });
+            fetchLeads();
+        }
+
+        function showMessageModal(id) {
+            fetch('/api/leads/' + id).then(r => r.json()).then(lead => {
+                alert('📧 Mensaje IA:\n\n' + (lead.ai_personalized_message || 'Sin mensaje generado'));
+            });
+        }
+
+        function showResponseModal(id) {
+            const status = prompt('Estado de respuesta:\n- responded\n- interested\n- not_interested');
+            if (!status) return;
+            const text = prompt('¿Qué dijo? (texto de la respuesta):');
+
+            fetch('/api/leads/' + id + '/response', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status, text })
+            }).then(() => fetchLeads());
+        }
+
+        async function fetchActivity() {
+            try {
+                const res = await fetch('/api/activity');
+                const data = await res.json();
+                const list = document.getElementById('activity-list');
+
+                if (data.length === 0) {
+                    list.innerHTML = '<div class="empty-state">Sin actividad registrada</div>';
+                    return;
+                }
+
+                list.innerHTML = data.map(day => `
+                    <div class="activity-item">
+                        <div class="activity-icon">📊</div>
+                        <div>
+                            <div class="activity-title">${day.extracted} leads extraídos</div>
+                            <div class="activity-time">${day.date} • ${day.emails_found} emails encontrados</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        function refreshData() {
+            fetchStats();
+            fetchLeads();
+            fetchActivity();
+        }
+
+        // Filter tabs
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                fetchLeads(tab.dataset.filter);
+            });
+        });
+
+        // Search
+        document.getElementById('search-input').addEventListener('input', debounce(searchLeads, 300));
+
+        function debounce(fn, ms) {
+            let t;
+            return function (...args) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, args), ms);
+            };
+        }
+
+        // Nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+
+        // ===== SCHEDULER CONTROL =====
+        async function startScheduler() {
+            const btn = document.getElementById('btn-start');
+            btn.disabled = true;
+            btn.textContent = '⏳ Iniciando...';
+
+            try {
+                const res = await fetch('/api/scheduler/start', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    fetchSchedulerStatus();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (e) {
+                alert('Error de conexión');
+            }
+            btn.disabled = false;
+            btn.textContent = '▶️ Iniciar Sistema';
+        }
+
+        async function stopScheduler() {
+            if (!confirm('¿Detener el sistema de captación?')) return;
+
+            const btn = document.getElementById('btn-stop');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/scheduler/stop', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    fetchSchedulerStatus();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (e) {
+                alert('Error de conexión');
+            }
+            btn.disabled = false;
+        }
+
+        async function fetchSchedulerStatus() {
+            try {
+                const res = await fetch('/api/scheduler/status');
+                const data = await res.json();
+
+                const statusText = document.getElementById('scheduler-status-text');
+                const btnStart = document.getElementById('btn-start');
+                const btnStop = document.getElementById('btn-stop');
+                const uptimeContainer = document.getElementById('uptime-container');
+                const uptimeDisplay = document.getElementById('scheduler-uptime');
+
+                const btnTest = document.getElementById('btn-test');
+
+                if (data.status === 'running') {
+                    statusText.textContent = '🟢 Sistema Activo';
+                    btnStart.style.display = 'none';
+                    btnStop.style.display = 'block';
+                    btnTest.style.display = 'none'; // No running tests while active to avoid conflict
+                    uptimeContainer.style.display = 'block';
+
+                    // Formatear uptime
+                    const h = Math.floor(data.uptime / 3600);
+                    const m = Math.floor((data.uptime % 3600) / 60);
+                    const s = data.uptime % 60;
+                    uptimeDisplay.textContent = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                } else {
+                    statusText.textContent = '⏸️ Detenido';
+                    btnStart.style.display = 'block';
+                    btnStop.style.display = 'none';
+                    btnTest.style.display = 'block';
+                    uptimeContainer.style.display = 'none';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function runTest() {
+            if (!confirm('¿Ejecutar prueba de sistema?\n\n- Se extraerán 10 leads\n- Se generarán mensajes con IA\n- Se enviarán correos (si hay cuentas configuradas)\n\nEsto tomará unos minutos.')) return;
+
+            const btn = document.getElementById('btn-test');
+            btn.disabled = true;
+            btn.textContent = '⏳ Ejecutando...';
+
+            try {
+                const res = await fetch('/api/test-run', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message);
+            } catch (e) {
+                alert('Error de conexión');
+            }
+            btn.disabled = false;
+            btn.textContent = '🧪 Prueba (10 Leads)';
+        }
+
+        // Init
+        refreshData();
+        fetchSchedulerStatus();
+        setInterval(refreshData, 15000);
+        setInterval(fetchSchedulerStatus, 5000);
+    </script>
+</body>
+
+</html>
