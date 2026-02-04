@@ -1,6 +1,6 @@
 /**
- * Google Maps Places API Scraper
- * Faster and more reliable than browser scraping
+ * Google Maps Places API Scraper (V1 - New API)
+ * Uses Field Masking to get website/phone in search results (Much cheaper & faster)
  */
 
 const axios = require('axios');
@@ -13,7 +13,7 @@ const { chromium } = require('playwright');
 class GoogleMapsAPIScraper {
     constructor() {
         this.apiKey = config.GOOGLE_MAPS_API_KEY;
-        this.baseUrl = 'https://maps.googleapis.com/maps/api/place';
+        this.baseUrl = 'https://places.googleapis.com/v1/places:searchText';
         this.emailFinder = null;
         this.browser = null;
         this.context = null;
@@ -48,7 +48,7 @@ class GoogleMapsAPIScraper {
 
         if (!this.context) await this.init();
 
-        console.log(chalk.yellow(`🔍 [API] Buscando: ${keyword}`));
+        console.log(chalk.yellow(`🔍 [API V1] Buscando: ${keyword}`));
 
         // Extract city from keyword
         const cityMatch = keyword.match(/en\s+(.+?)(?:\s*,|$)/i);
@@ -57,93 +57,104 @@ class GoogleMapsAPIScraper {
         let leads = [];
         let nextPageToken = null;
 
+        // Field Mask: Critical for cost/speed. Request contact info directly in search.
+        const fieldMask = [
+            'places.displayName',
+            'places.formattedAddress',
+            'places.nationalPhoneNumber',
+            'places.websiteUri',
+            'places.rating',
+            'places.userRatingCount',
+            'places.types',
+            'places.id'
+        ].join(',');
+
         try {
-            // First search
-            let allPlaces = [];
-
             do {
-                const searchUrl = nextPageToken
-                    ? `${this.baseUrl}/textsearch/json?pagetoken=${nextPageToken}&key=${this.apiKey}`
-                    : `${this.baseUrl}/textsearch/json?query=${encodeURIComponent(keyword)}&language=es&region=es&key=${this.apiKey}`;
+                const requestBody = {
+                    textQuery: keyword,
+                    pageSize: 20 // Max allowed per page
+                };
 
-                const response = await axios.get(searchUrl);
-                const data = response.data;
-
-                if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-                    console.log(chalk.red(`API Error: ${data.status} - ${data.error_message || ''}`));
-                    break;
-                }
-
-                if (data.results) {
-                    allPlaces = allPlaces.concat(data.results);
-                }
-
-                nextPageToken = data.next_page_token;
-
-                // Google requires a short delay before using next_page_token
                 if (nextPageToken) {
-                    await new Promise(r => setTimeout(r, 2000));
+                    requestBody.pageToken = nextPageToken;
                 }
 
-            } while (nextPageToken && allPlaces.length < maxLeads * 2);
+                const response = await axios.post(this.baseUrl, requestBody, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Goog-Api-Key': this.apiKey,
+                        'X-Goog-FieldMask': fieldMask
+                    }
+                });
 
-            console.log(chalk.green(`📍 Encontrados ${allPlaces.length} negocios vía API`));
+                const data = response.data;
+                const places = data.places || [];
 
-            // Process each place
-            for (let i = 0; i < Math.min(allPlaces.length, maxLeads * 2) && leads.length < maxLeads; i++) {
-                const place = allPlaces[i];
+                console.log(chalk.green(`📍 Página recibida: ${places.length} resultados`));
 
-                try {
-                    // Get place details
-                    const detailsUrl = `${this.baseUrl}/details/json?place_id=${place.place_id}&fields=name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,types&language=es&key=${this.apiKey}`;
-                    const detailsResponse = await axios.get(detailsUrl);
-                    const details = detailsResponse.data.result;
-
-                    if (!details) continue;
+                // Process batch
+                for (const place of places) {
+                    if (leads.length >= maxLeads) break;
 
                     const lead = {
-                        business_name: details.name || '',
-                        category: details.types ? details.types[0].replace(/_/g, ' ') : 'Negocio local',
-                        address: details.formatted_address || '',
+                        business_name: place.displayName?.text || '',
+                        category: place.types ? place.types[0].replace(/_/g, ' ') : 'Negocio local',
+                        address: place.formattedAddress || '',
                         city: searchCity,
-                        phone: details.formatted_phone_number || '',
-                        website: details.website || '',
-                        rating: details.rating || 0,
-                        reviews_count: details.user_ratings_total || 0,
+                        phone: place.nationalPhoneNumber || '',
+                        website: place.websiteUri || '', // Direct from search!
+                        rating: place.rating || 0,
+                        reviews_count: place.userRatingCount || 0,
                         email: null
                     };
 
-                    // Only process if has website
+                    // Only process if has website (critical filter)
                     if (lead.website) {
-                        console.log(chalk.gray(`  -> Buscando email en ${lead.website}...`));
-                        try {
-                            lead.email = await this.emailFinder.findEmail(lead.website);
-                        } catch (err) { }
+                        // Check if duplicate BEFORE finding email to save time
+                        const isDuplicate = this.checkDuplicate(lead.business_name);
 
-                        if (lead.email) {
-                            const saved = this.saveLead(lead);
-                            if (saved) {
-                                leads.push(lead);
-                                console.log(chalk.cyan(`[${leads.length}/${maxLeads}] ${lead.business_name} - ${lead.email}`));
+                        if (!isDuplicate) {
+                            console.log(chalk.gray(`  -> Buscando email en ${lead.website}...`));
+                            try {
+                                lead.email = await this.emailFinder.findEmail(lead.website);
+                            } catch (err) { }
+
+                            if (lead.email) {
+                                const saved = this.saveLead(lead);
+                                if (saved) {
+                                    leads.push(lead);
+                                    console.log(chalk.cyan(`[${leads.length}/${maxLeads}] ${lead.business_name} - ${lead.email}`));
+                                }
+                            } else {
+                                console.log(chalk.gray(`  -> ${lead.business_name} (sin email)`));
                             }
                         } else {
-                            console.log(chalk.gray(`  -> ${lead.business_name} (sin email, saltando)`));
+                            // console.log(chalk.gray(`  -> ${lead.business_name} (duplicado)`));
                         }
                     }
-
-                    // Small delay to be nice to the email finder
-                    await new Promise(r => setTimeout(r, 500));
-
-                } catch (err) {
-                    console.log(chalk.gray(`  Error procesando: ${err.message}`));
                 }
-            }
+
+                nextPageToken = data.nextPageToken;
+                // Delay for next page if exists
+                if (nextPageToken && leads.length < maxLeads) {
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+
+            } while (nextPageToken && leads.length < maxLeads);
 
         } catch (err) {
-            console.error(chalk.red('Error en API scraping:'), err.message);
+            console.error(chalk.red('Error en API V1 scraping:'), err.message);
+            if (err.response) console.error(err.response.data);
         }
 
         return leads;
+    }
+
+    checkDuplicate(businessName) {
+        // Quick check to avoid redundant email finding
+        const count = db.prepare('SELECT COUNT(*) as c FROM leads WHERE business_name = ?').get(businessName).c;
+        return count > 0;
     }
 
     saveLead(lead) {
