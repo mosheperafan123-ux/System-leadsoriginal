@@ -28,6 +28,9 @@ module.exports = {
   MAX_LEADS_PER_DAY: parseInt(process.env.MAX_LEADS_PER_DAY) || 500,
   HEADLESS_MODE: process.env.HEADLESS_MODE !== 'false',
 
+  // Google Maps API (Places API)
+  GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
+
   // Server
   PORT: parseInt(process.env.PORT) || 3000,
   NODE_ENV: process.env.NODE_ENV || 'development'

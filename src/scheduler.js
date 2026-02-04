@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const chalk = require('chalk');
-const GoogleMapsScraper = require('./scrapers/googlemaps');
+const GoogleMapsScraper = require('./scrapers/googlemaps_api'); // Uses API if available, fallback to Playwright
 const MessageGenerator = require('./ai/message_generator');
 const N8nEmailSender = require('./channels/n8n_sender');
 const { initDb, db } = require('./database');
