@@ -1,34 +1,47 @@
 const { google } = require('googleapis');
 const config = require('../config');
 const chalk = require('chalk');
+const { db } = require('../database'); // Import DB for persistence
 
 class GmailMultiAccountSender {
     constructor() {
         // Cuentas de email con sus refresh tokens
         this.accounts = this.loadAccounts();
         this.currentAccountIndex = 0;
+
+        // Límites (configurable via ENV)
+        this.dailyLimitPerAccount = parseInt(process.env.DAILY_LIMIT_PER_ACCOUNT) || 450;
+
+        // Inicializar contadores desde la DB para persistencia
         this.emailsSentPerAccount = {};
+        this.syncCounters();
 
-        // Límites de warming up (configurable via ENV)
-        // Día 1: 250 por cuenta | Día 2+: 500 por cuenta
-        // Cambiar DAILY_LIMIT_PER_ACCOUNT en EasyPanel cuando escale
-        this.dailyLimitPerAccount = parseInt(process.env.DAILY_LIMIT_PER_ACCOUNT) || 250;
-        this.hourlyLimitPerAccount = Math.ceil(this.dailyLimitPerAccount / 12); // Distribuir en horario laboral
+        console.log(chalk.gray(`   📧 Sender inicializado con ${this.accounts.length} cuentas. Límite diario: ${this.dailyLimitPerAccount}`));
+    }
 
-        // Inicializar contadores
+    syncCounters() {
         this.accounts.forEach(acc => {
-            this.emailsSentPerAccount[acc.email] = 0;
+            try {
+                // Contar emails enviados HOY por esta cuenta
+                const row = db.prepare(`
+                    SELECT COUNT(*) as c 
+                    FROM leads 
+                    WHERE email_sent = 1 
+                    AND sender_email = ? 
+                    AND DATE(email_sent_at) = DATE('now')
+                `).get(acc.email);
+
+                this.emailsSentPerAccount[acc.email] = row ? row.c : 0;
+            } catch (e) {
+                console.error(`Error sincronizando counter para ${acc.email}:`, e.message);
+                this.emailsSentPerAccount[acc.email] = 0;
+            }
         });
     }
 
-
     loadAccounts() {
-        // Cargar cuentas desde variables de entorno
-        // Formato: GMAIL_ACCOUNTS=email1:token1,email2:token2,...
         const accountsStr = process.env.GMAIL_ACCOUNTS || '';
-
         if (!accountsStr) {
-            // Fallback: formato antiguo con una sola cuenta
             if (process.env.GMAIL_REFRESH_TOKEN && process.env.EMAIL_PROFILES) {
                 const emails = process.env.EMAIL_PROFILES.split(',');
                 return [{
@@ -53,46 +66,37 @@ class GmailMultiAccountSender {
         );
     }
 
-    getAuthUrl(email) {
-        const oauth2Client = this.getOAuth2Client();
-        return oauth2Client.generateAuthUrl({
-            access_type: 'offline',
-            scope: [
-                'https://www.googleapis.com/auth/gmail.send',
-                'https://www.googleapis.com/auth/gmail.compose',
-                'https://www.googleapis.com/auth/gmail.readonly'
-            ],
-            prompt: 'consent',
-            login_hint: email // Pre-seleccionar la cuenta
-        });
-    }
-
-    async getTokenFromCode(code) {
-        const oauth2Client = this.getOAuth2Client();
-        const { tokens } = await oauth2Client.getToken(code);
-        return tokens;
-    }
-
-    // Obtener siguiente cuenta disponible (rotación con balanceo)
+    // Obtener siguiente cuenta disponible (rotación estricta con límite diario)
     getNextAccount() {
         if (this.accounts.length === 0) return null;
 
-        // Encontrar la cuenta con menos envíos que no haya llegado al límite
+        // Re-sincronizar contadores ocasionalmente (o confiar en memoria + DB)
+        // Por eficiencia confiamos en memoria pero init desde DB
+
         let selectedAccount = null;
         let minSent = Infinity;
 
         for (const account of this.accounts) {
-            const sent = this.emailsSentPerAccount[account.email] || 0;
-            if (sent < this.hourlyLimitPerAccount && sent < minSent) {
-                minSent = sent;
-                selectedAccount = account;
+            const sentToday = this.emailsSentPerAccount[account.email] || 0;
+
+            // CRÍTICO: Verificar límite diario
+            if (sentToday < this.dailyLimitPerAccount) {
+                if (sentToday < minSent) {
+                    minSent = sentToday;
+                    selectedAccount = account;
+                }
             }
+        }
+
+        if (!selectedAccount) {
+            // Check if ALL accounts are full
+            const totalSent = Object.values(this.emailsSentPerAccount).reduce((a, b) => a + b, 0);
+            console.log(chalk.yellow(`   ⚠ Límite diario alcanzado en todas las cuentas. Total hoy: ${totalSent}`));
         }
 
         return selectedAccount;
     }
 
-    // Crear mensaje en formato MIME
     createMessage(from, to, subject, body) {
         const messageParts = [
             `From: ${from}`,
@@ -104,19 +108,21 @@ class GmailMultiAccountSender {
             body.replace(/\n/g, '<br>')
         ];
 
-        const message = messageParts.join('\n');
-        return Buffer.from(message)
+        return Buffer.from(messageParts.join('\n'))
             .toString('base64')
             .replace(/\+/g, '-')
             .replace(/\//g, '_')
             .replace(/=+$/, '');
     }
 
-    async sendEmail(to, subject, body, leadData = {}) {
+    async sendEmail(to, subject, body, lead) {
+        // Sincronizar antes de decidir (frenar condiciones de carrera en reinicios)
+        this.syncCounters();
+
         const account = this.getNextAccount();
 
+        // RETORNA FALSE SI NO HAY CUENTAS DISPONIBLES (PAUSA GLOBAL)
         if (!account) {
-            console.log(chalk.red('❌ No hay cuentas disponibles o todas llegaron al límite'));
             return false;
         }
 
@@ -132,11 +138,20 @@ class GmailMultiAccountSender {
                 requestBody: { raw: encodedMessage }
             });
 
-            // Incrementar contador
+            // Actualizar DB con el sender_email para persistencia
+            db.prepare(`
+                UPDATE leads 
+                SET email_sent = 1, 
+                    email_sent_at = CURRENT_TIMESTAMP, 
+                    sender_email = ? 
+                WHERE id = ?
+            `).run(account.email, lead.id);
+
+            // Actualizar contador en memoria
             this.emailsSentPerAccount[account.email]++;
 
             console.log(chalk.green(`✅ Email enviado a ${to}`));
-            console.log(chalk.gray(`   Desde: ${account.email} (${this.emailsSentPerAccount[account.email]}/${this.hourlyLimitPerAccount})`));
+            console.log(chalk.gray(`   Desde: ${account.email} (${this.emailsSentPerAccount[account.email]}/${this.dailyLimitPerAccount})`));
 
             return true;
 
@@ -201,9 +216,6 @@ class GmailMultiAccountSender {
                             WHERE id = ?
                         `).run(snippet, lead.id);
 
-                        // Marcar como leído en Gmail para no procesarlo de nuevo (opcional, por ahora lo dejamos unread para que el humano lo vea)
-                        // await gmail.users.messages.modify({ userId: 'me', id: messageMeta.id, requestBody: { removeLabelIds: ['UNREAD'] } });
-
                         totalResponses++;
                     }
                 }
@@ -214,32 +226,34 @@ class GmailMultiAccountSender {
         }
         return totalResponses;
     }
+}
 
-    // Resetear contadores (llamar cada hora)
-    resetCounters() {
-        this.accounts.forEach(acc => {
-            this.emailsSentPerAccount[acc.email] = 0;
-        });
-        console.log(chalk.blue('🔄 Contadores de email reseteados'));
-    }
 
-    // Estadísticas de envío
-    getStats() {
-        return {
-            accounts: this.accounts.map(a => a.email),
-            sentPerAccount: this.emailsSentPerAccount,
-            dailyLimitPerAccount: this.dailyLimitPerAccount,
-            hourlyLimitPerAccount: this.hourlyLimitPerAccount,
-            totalCapacityPerDay: this.accounts.length * this.dailyLimitPerAccount,
-            totalCapacityPerHour: this.accounts.length * this.hourlyLimitPerAccount,
-            totalSent: Object.values(this.emailsSentPerAccount).reduce((a, b) => a + b, 0),
-            accountsConfigured: this.accounts.length
-        };
-    }
+// Resetear contadores (llamar cada hora)
+resetCounters() {
+    this.accounts.forEach(acc => {
+        this.emailsSentPerAccount[acc.email] = 0;
+    });
+    console.log(chalk.blue('🔄 Contadores de email reseteados'));
+}
 
-    isConfigured() {
-        return this.accounts.length > 0;
-    }
+// Estadísticas de envío
+getStats() {
+    return {
+        accounts: this.accounts.map(a => a.email),
+        sentPerAccount: this.emailsSentPerAccount,
+        dailyLimitPerAccount: this.dailyLimitPerAccount,
+        hourlyLimitPerAccount: this.hourlyLimitPerAccount,
+        totalCapacityPerDay: this.accounts.length * this.dailyLimitPerAccount,
+        totalCapacityPerHour: this.accounts.length * this.hourlyLimitPerAccount,
+        totalSent: Object.values(this.emailsSentPerAccount).reduce((a, b) => a + b, 0),
+        accountsConfigured: this.accounts.length
+    };
+}
+
+isConfigured() {
+    return this.accounts.length > 0;
+}
 }
 
 module.exports = GmailMultiAccountSender;

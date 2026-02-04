@@ -23,6 +23,7 @@ function initDb() {
       extraction_source TEXT DEFAULT 'google_maps',
       email_sent BOOLEAN DEFAULT 0,
       email_sent_at DATETIME,
+      sender_email TEXT,
       whatsapp_sent BOOLEAN DEFAULT 0,
       whatsapp_sent_at DATETIME,
       ai_personalized_message TEXT,
@@ -33,6 +34,18 @@ function initDb() {
       UNIQUE(business_name, city)
     )
   `);
+
+  // Migración segura: Agregar columna sender_email si no existe
+  try {
+    const columns = db.prepare("PRAGMA table_info(leads)").all();
+    const hasSenderEmail = columns.some(col => col.name === 'sender_email');
+    if (!hasSenderEmail) {
+      console.log('Migración: Agregando columna sender_email...');
+      db.prepare("ALTER TABLE leads ADD COLUMN sender_email TEXT").run();
+    }
+  } catch (e) {
+    console.error('Error en migración:', e.message);
+  }
 
   // Tabla de Logs
   db.exec(`

@@ -129,8 +129,14 @@ async function runEmailCycle() {
 
         const sent = await sender.sendEmail(lead.email, subject, body, lead);
 
+        if (!sent) {
+            console.log(chalk.yellow('🛑 Deteniendo ciclo de envíos: Límite diario alcanzado o error.'));
+            break; // Stop loop immediately
+        }
+
         if (sent) {
-            db.prepare('UPDATE leads SET email_sent = 1, email_sent_at = CURRENT_TIMESTAMP WHERE id = ?').run(lead.id);
+            // Already updated in sender, but for safety in scheduler view
+            // No need to update 'email_sent' here if sender does it, but keeping for compatibility
         }
 
         // Rate limit aleatorio (1-5 segundos) para evitar spam
