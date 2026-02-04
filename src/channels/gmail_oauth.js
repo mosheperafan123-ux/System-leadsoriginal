@@ -224,36 +224,33 @@ class GmailMultiAccountSender {
                 console.error(chalk.red(`Error verificando inbox de ${account.email}:`), error.message);
             }
         }
-        return totalResponses;
     }
-}
 
+    // Resetear contadores (llamar cada hora)
+    resetCounters() {
+        this.accounts.forEach(acc => {
+            this.emailsSentPerAccount[acc.email] = 0;
+        });
+        console.log(chalk.blue('🔄 Contadores de email reseteados'));
+    }
 
-// Resetear contadores (llamar cada hora)
-resetCounters() {
-    this.accounts.forEach(acc => {
-        this.emailsSentPerAccount[acc.email] = 0;
-    });
-    console.log(chalk.blue('🔄 Contadores de email reseteados'));
-}
+    // Estadísticas de envío
+    getStats() {
+        return {
+            accounts: this.accounts.map(a => a.email),
+            sentPerAccount: this.emailsSentPerAccount,
+            dailyLimitPerAccount: this.dailyLimitPerAccount,
+            hourlyLimitPerAccount: this.hourlyLimitPerAccount,
+            totalCapacityPerDay: this.accounts.length * this.dailyLimitPerAccount,
+            totalCapacityPerHour: this.accounts.length * this.hourlyLimitPerAccount,
+            totalSent: Object.values(this.emailsSentPerAccount).reduce((a, b) => a + b, 0),
+            accountsConfigured: this.accounts.length
+        };
+    }
 
-// Estadísticas de envío
-getStats() {
-    return {
-        accounts: this.accounts.map(a => a.email),
-        sentPerAccount: this.emailsSentPerAccount,
-        dailyLimitPerAccount: this.dailyLimitPerAccount,
-        hourlyLimitPerAccount: this.hourlyLimitPerAccount,
-        totalCapacityPerDay: this.accounts.length * this.dailyLimitPerAccount,
-        totalCapacityPerHour: this.accounts.length * this.hourlyLimitPerAccount,
-        totalSent: Object.values(this.emailsSentPerAccount).reduce((a, b) => a + b, 0),
-        accountsConfigured: this.accounts.length
-    };
-}
-
-isConfigured() {
-    return this.accounts.length > 0;
-}
+    isConfigured() {
+        return this.accounts.length > 0;
+    }
 }
 
 module.exports = GmailMultiAccountSender;
