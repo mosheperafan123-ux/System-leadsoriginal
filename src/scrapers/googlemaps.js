@@ -110,10 +110,15 @@ class GoogleMapsScraper {
                 const lead = await this.extractDetails(searchCity);
 
                 if (lead.business_name && lead.business_name.length > 2) {
-                    const saved = this.saveLead(lead);
-                    if (saved) {
-                        leads.push(lead);
-                        console.log(chalk.cyan(`[${leads.length}/${maxLeads}] ${lead.business_name}`));
+                    // Solo guardar si tiene email (sin email no podemos contactar)
+                    if (lead.email) {
+                        const saved = this.saveLead(lead);
+                        if (saved) {
+                            leads.push(lead);
+                            console.log(chalk.cyan(`[${leads.length}/${maxLeads}] ${lead.business_name} - ${lead.email}`));
+                        }
+                    } else {
+                        console.log(chalk.gray(`  -> ${lead.business_name} (sin email, saltando)`));
                     }
                 }
             } catch (err) {
