@@ -20,16 +20,28 @@ const NICHES = [
 ];
 
 const CITIES = [
-    'Madrid',
-    'Barcelona',
-    'Valencia',
-    'Sevilla',
-    'Zaragoza',
-    'Málaga',
-    'Murcia',
-    'Palma de Mallorca',
-    'Bilbao',
-    'Alicante'
+    // Top 10
+    'Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Zaragoza', 'Málaga', 'Murcia', 'Palma', 'Las Palmas', 'Bilbao',
+    // Top 20
+    'Alicante', 'Córdoba', 'Valladolid', 'Vigo', 'Gijón', 'L\'Hospitalet de Llobregat', 'Vitoria-Gasteiz', 'A Coruña', 'Elche', 'Granada',
+    // Top 30
+    'Terrassa', 'Badalona', 'Oviedo', 'Cartagena', 'Sabadell', 'Jerez de la Frontera', 'Móstoles', 'Santa Cruz de Tenerife', 'Pamplona', 'Almería',
+    // Top 40
+    'Alcalá de Henares', 'Fuenlabrada', 'Leganés', 'San Sebastián', 'Getafe', 'Burgos', 'Albacete', 'Santander', 'Castellón de la Plana', 'Logroño',
+    // Top 50
+    'Badajoz', 'Salamanca', 'Huelva', 'Lleida', 'Marbella', 'Tarragona', 'Dos Hermanas', 'León', 'Torrejón de Ardoz', 'Parla',
+    // Top 60
+    'Mataró', 'Cádiz', 'Santa Coloma de Gramenet', 'Algeciras', 'Jaén', 'Alcobendas', 'Ourense', 'Reus', 'Telde', 'Barakaldo',
+    // Top 70
+    'Lugo', 'Girona', 'Santiago de Compostela', 'San Fernando', 'Cáceres', 'Las Rozas de Madrid', 'Roquetas de Mar', 'Lorca', 'Sant Cugat del Vallès', 'El Ejido',
+    // Top 80
+    'El Puerto de Santa María', 'San Sebastián de los Reyes', 'Cornellà de Llobregat', 'Melilla', 'Pozuelo de Alarcón', 'Coslada', 'Ceuta', 'Torrevieja', 'Talavera de la Reina', 'Guadalajara',
+    // Top 90
+    'Toledo', 'Rivas-Vaciamadrid', 'Chiclana de la Frontera', 'Pontevedra', 'Sant Boi de Llobregat', 'Torrent', 'Orihuela', 'Avilés', 'Arona', 'Palencia',
+    // Top 100+
+    'Vélez-Málaga', 'Getxo', 'Mijas', 'Fuengirola', 'Rubí', 'Alcalá de Guadaíra', 'Gandía', 'Manresa', 'Ciudad Real', 'Majadahonda',
+    'Valdemoro', 'Benidorm', 'Torremolinos', 'Estepona', 'Sanlúcar de Barrameda', 'Paterna', 'Benalmádena', 'Santa Lucía de Tirajana', 'Castelldefels', 'Viladecans',
+    'Sagunto', 'Ferrol', 'Ponferrada', 'Collado Villalba', 'La Línea de la Concepción', 'Arrecife', 'Irún', 'Zamora', 'Granollers', 'Boadilla del Monte'
 ];
 
 // Generar combinaciones
