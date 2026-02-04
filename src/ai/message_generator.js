@@ -35,22 +35,40 @@ class MessageGenerator {
             - Exclusividad: Solo aceptamos 3 proyectos este trimestre para garantizar calidad boutique.
 
             Estructura del Email (Estricta):
-            Debes seguir EXACTAMENTE esta estructura y tono. No inventes saludos raros ni menciones ratings.
+            Debes seguir EXACTAMENTE esta estructura y contenido.
 
-            "Hola ${lead.business_name}. La mayoría de clínicas pierden el 40% de ventas por seguimiento manual. En AR Technocode desarrollamos infraestructuras privadas de recepción que corrigen esto al instante. Abrimos cupo para 3 únicos proyectos a medida este trimestre. Si os interesa ver cómo opera, mirad el detalle aquí: ${config.LANDING_PAGE_URL}"
+            Asunto: Reporte de Eficiencia: Tiempos de respuesta y fuga de capital | ${lead.business_name}
+
+            Hola, equipo de ${lead.business_name}.
+
+            Les escribo porque he notado un patrón en su sector que Harvard Business Review llama "El Valle de la Muerte de los 5 Minutos".
+
+            Los datos muestran que si un paciente potencial les escribe y no recibe respuesta en 5 minutos, la probabilidad de que agende con ustedes cae un 400%.
+
+            Básicamente, si su recepción está ocupada o cerrada, le están regalando el paciente a la clínica de enfrente.
+
+            En AR Technocode desarrollamos Infraestructura Private Tech a medida (no software genérico) que atiende, cualifica y agenda vía WhatsApp en 3 segundos, las 24 horas.
+
+            Si quieren detener esa fuga de ingresos hoy mismo, pueden agendar una cita en nuestra pagina web con nuestro equipo:
+
+            ${config.LANDING_PAGE_URL}
+
+            Atentamente,
+
+            Rafael Manrique
+            Director de Tecnología AR Technocode
 
             Reglas:
-            - NO menciones ratings, estrellas ni reseñas.
-            - Mantenlo corto y directo (máximo 60 palabras).
-            - Tono: Profesional, directo, 'high-end'.
-            - Asunto: "Infraestructura Privada | ${lead.business_name}" o "Propuesta T1 | ${lead.business_name}"`
+            - NO cambies ni una palabra del cuerpo del mensaje.
+            - Solo reemplaza [Nombre de la Clínica] con ${lead.business_name}.
+            - El Asunto debe ser exactamente el especificado arriba.
                     },
                     {
                         role: "user",
                         content: `Redacta la invitación exclusiva para:
-Negocio: ${lead.business_name}
-Nicho: ${lead.category || 'Salud/Belleza'}
-Ciudad: ${lead.city || 'España'}`
+                            Negocio: ${ lead.business_name }
+Nicho: ${ lead.category || 'Salud/Belleza' }
+Ciudad: ${ lead.city || 'España' }`
                     }
                 ],
                 // temperature: 0.7, // Comentado porque el modelo o1 no soporta temperatura personalizada
@@ -66,7 +84,7 @@ Ciudad: ${lead.city || 'España'}`
 
     getMockMessage(lead) {
         // Si no hay API Key, no generar mensaje (evita enviar emails de prueba)
-        console.warn(chalk.yellow(`  ⚠ No se pudo generar mensaje para ${lead.business_name} - Sin API Key`));
+        console.warn(chalk.yellow(`  ⚠ No se pudo generar mensaje para ${ lead.business_name } - Sin API Key`));
         return null;
     }
 }
