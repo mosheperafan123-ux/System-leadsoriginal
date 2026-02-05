@@ -140,9 +140,9 @@ async function runEmailCycle() {
             // No need to update 'email_sent' here if sender does it, but keeping for compatibility
         }
 
-        // Rate limit aleatorio (1-5 segundos) para evitar spam
-        const min = 1;
-        const max = 5;
+        // Rate limit aleatorio (4-10 segundos) para evitar spam y parecer humano
+        const min = 4;
+        const max = 10;
         const delaySeconds = (Math.random() * (max - min) + min).toFixed(1);
 
         console.log(chalk.gray(`   ⏳ Esperando ${delaySeconds}s...`));
