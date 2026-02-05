@@ -21,14 +21,18 @@ class MessageGenerator {
         }
 
         // Determinar tipo de saludo según categoría
-        let tipoNegocio = 'Clínica';
+        // Determinar tipo de saludo según categoría
+        let tipoNegocio = 'Negocio'; // Default más seguro
         const cat = (lead.category || '').toLowerCase();
-        if (cat.includes('dental') || cat.includes('odonto')) {
+
+        if (cat.includes('dental') || cat.includes('odonto') || cat.includes('dentista')) {
             tipoNegocio = 'Clínica Dental';
-        } else if (cat.includes('estética') || cat.includes('estetica') || cat.includes('belleza')) {
-            tipoNegocio = 'Centro de Estética';
-        } else if (cat.includes('salón') || cat.includes('salon') || cat.includes('peluquería') || cat.includes('peluqueria')) {
+        } else if (cat.includes('salón') || cat.includes('salon') || cat.includes('peluquería') || cat.includes('peluqueria') || cat.includes('barbe')) {
             tipoNegocio = 'Salón de Belleza';
+        } else if (cat.includes('estética') || cat.includes('estetica') || cat.includes('belleza') || cat.includes('spa')) {
+            tipoNegocio = 'Centro de Estética';
+        } else if (cat.includes('clínica') || cat.includes('clinica')) {
+            tipoNegocio = 'Clínica';
         }
 
         const emailTemplate = `Asunto: Reporte de Ineficiencia Operativa y Fuga de Capital | ${lead.business_name}
