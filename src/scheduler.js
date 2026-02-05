@@ -62,13 +62,29 @@ const LEADS_PER_CYCLE = 100;
 
 async function runScrapingCycle() {
     console.log(chalk.bold.cyan('\n=== CICLO DE EXTRACCIÓN ==='));
-    console.log(chalk.gray(`Hora: ${new Date().toLocaleString('es-CO')}`));
+    console.log(chalk.gray(`Hora: ${new Date().toLocaleString('es-ES')}`));
 
     initDb();
 
-    const scraper = new GoogleMapsScraper();
+    // 1. Verificar si ya llegamos al límite de envíos diarios
+    // Si ya enviamos el máximo hoy, no tiene sentido seguir gastando API de scraping
+    const sender = new N8nEmailSender();
+    // Usamos el sender solo para checkear stats (hack rápido o instanciamos el check)
+    // Mejor consultamos la DB directamenet:
 
-    // Rotamos entre keywords
+    const dailyLimit = parseInt(process.env.DAILY_LIMIT_PER_ACCOUNT) || 450;
+    const accounts = (process.env.GMAIL_ACCOUNTS || '').split(',').length || 1;
+    const totalDailyCapacity = dailyLimit * accounts;
+
+    const emailsSentToday = db.prepare("SELECT COUNT(*) as c FROM leads WHERE email_sent = 1 AND DATE(email_sent_at) = DATE('now')").get().c;
+
+    if (emailsSentToday >= totalDailyCapacity) {
+        console.log(chalk.yellow(`🛑 Límite diario de emails alcanzado (${emailsSentToday}/${totalDailyCapacity}).`));
+        console.log(chalk.yellow(`   Pausando scraping por hoy para ahorrar API.`));
+        return;
+    }
+
+    const scraper = new GoogleMapsScraper();
     const keyword = KEYWORDS[Math.floor(Math.random() * KEYWORDS.length)];
 
     try {
