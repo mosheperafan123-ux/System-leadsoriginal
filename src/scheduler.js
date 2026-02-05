@@ -53,7 +53,8 @@ NICHES.forEach(niche => {
 });
 
 // Cuántos leads extraer por ciclo
-const LEADS_PER_CYCLE = 100;
+// Cuántos leads extraer por ciclo
+const LEADS_PER_CYCLE = 500;
 
 // ===========================================
 // FUNCIONES PRINCIPALES
