@@ -56,8 +56,7 @@ npm run scheduler
 │   │   ├── googlemaps.js   # Scraper de Google Maps
 │   │   └── email_finder.js # Extractor de emails
 │   ├── channels/
-│   │   ├── gmail_oauth.js  # Envío Gmail con rotación
-│   │   └── n8n_sender.js   # Alternativa via N8N
+│   │   └── gmail_oauth.js  # Envío Gmail con rotación
 │   ├── ai/
 │   │   └── message_generator.js
 │   ├── database.js

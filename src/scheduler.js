@@ -68,9 +68,6 @@ async function runScrapingCycle() {
 
     // 1. Verificar si ya llegamos al límite de envíos diarios
     // Si ya enviamos el máximo hoy, no tiene sentido seguir gastando API de scraping
-    const sender = new N8nEmailSender();
-    // Usamos el sender solo para checkear stats (hack rápido o instanciamos el check)
-    // Mejor consultamos la DB directamenet:
 
     const dailyLimit = parseInt(process.env.DAILY_LIMIT_PER_ACCOUNT) || 450;
     const accounts = (process.env.GMAIL_ACCOUNTS || '').split(',').length || 1;

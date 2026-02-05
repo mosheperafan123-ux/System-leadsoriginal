@@ -19,10 +19,6 @@ module.exports = {
   LANDING_PAGE_URL: process.env.LANDING_PAGE_URL || 'https://artechnocode.online',
 
   // Perfiles de email para rotación (evitar spam)
-  EMAIL_PROFILES: (process.env.EMAIL_PROFILES || '').split(',').filter(Boolean),
-
-  // N8N Webhook (alternativo)
-  N8N_WEBHOOK_URL: process.env.N8N_WEBHOOK_URL,
 
   // Scraping
   MAX_LEADS_PER_DAY: parseInt(process.env.MAX_LEADS_PER_DAY) || 500,
