@@ -364,11 +364,20 @@ console.log(chalk.gray('Flujo: Scrape → IA → Email → Repeat (cada 15 min)'
 initDb();
 
 // Ejecutar ciclo principal cada 15 minutos
-cron.schedule('*/15 * * * *', runMainCycle);
+// Ejecutar ciclo continuo (sin esperas largas)
+async function startContinuousLoop() {
+    while (true) {
+        try {
+            await runMainCycle();
+        } catch (error) {
+            console.error(chalk.red('Error crítico en ciclo principal:'), error);
+        }
 
-// Reporte diario a las 23:00
-cron.schedule('0 23 * * *', sendDailyReport);
+        console.log(chalk.gray('⏳ Esperando 10 segundos para reiniciar ciclo...'));
+        await new Promise(resolve => setTimeout(resolve, 10000));
+    }
+}
 
-// Ejecutar uno inicial al arrancar
-runMainCycle();
+// Iniciar bucle
+startContinuousLoop();
 

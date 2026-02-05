@@ -194,7 +194,19 @@ class GoogleMapsAPIScraper {
                 VALUES (@business_name, @category, @address, @city, @phone, @website, @rating, @reviews_count, @email)
             `);
             const result = stmt.run(lead);
-            return result.changes > 0;
+
+            // CRITICAL FIX: Assign the DB ID to the lead object
+            // If it was ignored (duplicate), we need to fetch the existing ID? 
+            // result.lastInsertRowid is correct for INSERT. For IGNORE it might be 0 if ignored.
+
+            if (result.changes > 0) {
+                lead.id = result.lastInsertRowid;
+                return true;
+            } else {
+                // If ignored, likely duplicate. Fetch existing ID if we wanted to update, 
+                // but we return false to skip duplicates as per logic.
+                return false;
+            }
         } catch (e) {
             return false;
         }
