@@ -60,24 +60,70 @@ const LEADS_PER_CYCLE = 100;
 // FUNCIONES PRINCIPALES
 // ===========================================
 
-async function runScrapingCycle() {
-    console.log(chalk.bold.cyan('\n=== CICLO DE EXTRACCIÓN ==='));
+// ===========================================
+// PROCESAMIENTO LINEAL (PIPELINE)
+// ===========================================
+
+async function processLeadPipeline(lead) {
+    const generator = new MessageGenerator();
+    const sender = new GmailMultiAccountSender();
+
+    try {
+        // 1. Generar Mensaje IA
+        process.stdout.write(chalk.magenta('   🤖 Generando mensaje... '));
+        const message = await generator.generateMessage(lead);
+
+        if (!message || message.includes('[SIMULACIÓN')) {
+            console.log(chalk.yellow('Falló generación.'));
+            return;
+        }
+
+        // Guardar mensaje en DB
+        db.prepare('UPDATE leads SET ai_personalized_message = ? WHERE id = ?').run(message, lead.id);
+        console.log(chalk.green('OK'));
+
+        // 2. Enviar Email (Instantáneo)
+        if (!sender.isConfigured()) {
+            console.log(chalk.yellow('   ⚠ Gmail no configurado. Saltando envío.'));
+            return;
+        }
+
+        const subjectMatch = message.match(/Asunto:\s*(.+)/i);
+        const subject = subjectMatch ? subjectMatch[1].trim() : `Oportunidad para ${lead.business_name}`;
+        const body = message.replace(/Asunto:.*\n?/i, '');
+
+        const sent = await sender.sendEmail(lead.email, subject, body, lead);
+
+        if (sent) {
+            // 3. Delay aleatorio (1-5s) para "humanizar" y no saturar
+            const min = 1;
+            const max = 5;
+            const delaySeconds = (Math.random() * (max - min) + min).toFixed(1);
+            console.log(chalk.gray(`   ⏳ Esperando ${delaySeconds}s...`));
+            await new Promise(r => setTimeout(r, delaySeconds * 1000));
+        } else {
+            console.log(chalk.red('   ❌ No se pudo enviar (límite o error).'));
+        }
+
+    } catch (err) {
+        console.error(chalk.red('Error en pipeline del lead:'), err.message);
+    }
+}
+
+async function runPipelineCycle() {
+    console.log(chalk.bold.cyan('\n=== CICLO PIPELINE (TIEMPO REAL) ==='));
     console.log(chalk.gray(`Hora: ${new Date().toLocaleString('es-ES')}`));
 
     initDb();
 
-    // 1. Verificar si ya llegamos al límite de envíos diarios
-    // Si ya enviamos el máximo hoy, no tiene sentido seguir gastando API de scraping
-
+    // Verificar Límite Diario Global
     const dailyLimit = parseInt(process.env.DAILY_LIMIT_PER_ACCOUNT) || 450;
     const accounts = (process.env.GMAIL_ACCOUNTS || '').split(',').length || 1;
     const totalDailyCapacity = dailyLimit * accounts;
-
     const emailsSentToday = db.prepare("SELECT COUNT(*) as c FROM leads WHERE email_sent = 1 AND DATE(email_sent_at) = DATE('now')").get().c;
 
     if (emailsSentToday >= totalDailyCapacity) {
-        console.log(chalk.yellow(`🛑 Límite diario de emails alcanzado (${emailsSentToday}/${totalDailyCapacity}).`));
-        console.log(chalk.yellow(`   Pausando scraping por hoy para ahorrar API.`));
+        console.log(chalk.yellow(`🛑 Límite diario alcanzado (${emailsSentToday}/${totalDailyCapacity}). Pausando.`));
         return;
     }
 
@@ -85,12 +131,15 @@ async function runScrapingCycle() {
     const keyword = KEYWORDS[Math.floor(Math.random() * KEYWORDS.length)];
 
     try {
-        await scraper.scrape(keyword, LEADS_PER_CYCLE);
+        // Pasamos el callback para que procese CADA LEAD apenas lo encuentra
+        await scraper.scrape(keyword, LEADS_PER_CYCLE, processLeadPipeline);
     } catch (err) {
         console.error(chalk.red('Error en scraping:'), err.message);
     } finally {
         await scraper.close();
     }
+
+    printStats();
 }
 
 async function runAIGenerationCycle() {
@@ -301,24 +350,9 @@ async function sendDailyReport() {
 // CICLO PRINCIPAL LINEAL
 // ===========================================
 
-// Ciclo maestro: Scrape -> AI -> Send -> Repeat (Lineal, sin paralelismo)
+// Ciclo maestro: Solo invoca el Pipeline
 async function runMainCycle() {
-    console.log(chalk.bold.cyan('\n🔄 === CICLO PRINCIPAL INICIADO ==='));
-    console.log(chalk.gray(`Hora: ${new Date().toLocaleString('es-ES')}`));
-
-    // Paso 1: Scraping
-    await runScrapingCycle();
-
-    // Paso 2: Generación IA
-    await runAIGenerationCycle();
-
-    // Paso 3: Envío de Emails (hasta terminar o alcanzar límite)
-    await runEmailCycle();
-
-    // Paso 4: Mostrar estadísticas
-    printStats();
-
-    console.log(chalk.bold.cyan('✅ === CICLO PRINCIPAL COMPLETADO ===\n'));
+    await runPipelineCycle();
 }
 
 console.log(chalk.bold.cyan('🚀 Sistema de Leads iniciado (Modo Lineal)'));

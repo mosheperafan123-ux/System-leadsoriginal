@@ -43,7 +43,7 @@ class GoogleMapsAPIScraper {
         if (this.browser) await this.browser.close();
     }
 
-    async scrape(keyword, maxLeads = 100) {
+    async scrape(keyword, maxLeads = 100, onLeadFound = null) {
         if (!this.apiKey) {
             console.log(chalk.yellow('⚠ No hay API Key de Google Maps, usando scraper tradicional...'));
             const GoogleMapsScraper = require('./googlemaps');
@@ -144,6 +144,11 @@ class GoogleMapsAPIScraper {
                                 if (saved) {
                                     leads.push(lead);
                                     console.log(chalk.cyan(`[${leads.length}/${maxLeads}] ${lead.business_name} - ${lead.email}`));
+
+                                    // CALLBACK PARA PROCESAMIENTO LINEAL (PIPELINE)
+                                    if (onLeadFound) {
+                                        await onLeadFound(lead);
+                                    }
                                 }
                             } else {
                                 console.log(chalk.gray(`  -> ${lead.business_name} (sin email)`));
