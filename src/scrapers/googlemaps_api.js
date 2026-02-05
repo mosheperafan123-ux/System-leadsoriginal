@@ -147,7 +147,12 @@ class GoogleMapsAPIScraper {
 
                                     // CALLBACK PARA PROCESAMIENTO LINEAL (PIPELINE)
                                     if (onLeadFound) {
-                                        await onLeadFound(lead);
+                                        const result = await onLeadFound(lead);
+                                        // Si el callback pide parar (ej: límite de emails alcanzado), abortamos scraping
+                                        if (result && result.stop) {
+                                            console.log(chalk.red('🛑 Callback solicitó detener scraping (Límite Global Alcanzado).'));
+                                            return leads; // Retornamos lo que tenemos y salimos
+                                        }
                                     }
                                 }
                             } else {

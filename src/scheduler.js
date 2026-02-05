@@ -103,11 +103,14 @@ async function processLeadPipeline(lead) {
             await new Promise(r => setTimeout(r, delaySeconds * 1000));
         } else {
             console.log(chalk.red('   ❌ No se pudo enviar (límite o error).'));
+            // Si falla el envío (asumimos por límite), retornamos señal de STOP
+            return { stop: true };
         }
 
     } catch (err) {
         console.error(chalk.red('Error en pipeline del lead:'), err.message);
     }
+    return { stop: false };
 }
 
 async function runPipelineCycle() {
