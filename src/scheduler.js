@@ -54,7 +54,7 @@ NICHES.forEach(niche => {
 
 // Cuántos leads extraer por ciclo
 // Cuántos leads extraer por ciclo
-const LEADS_PER_CYCLE = 500;
+const LEADS_PER_CYCLE = 100;
 
 // ===========================================
 // FUNCIONES PRINCIPALES
@@ -87,7 +87,7 @@ async function runAIGenerationCycle() {
     const pendingLeads = db.prepare(`
         SELECT * FROM leads 
         WHERE ai_personalized_message IS NULL 
-        LIMIT 50
+        LIMIT 150
     `).all();
 
     console.log(`Procesando ${pendingLeads.length} leads sin mensaje...`);
@@ -292,14 +292,14 @@ console.log('  - Reporte diario: 23:00');
 
 initDb();
 
-// Ejecutar scraping cada hora
-cron.schedule('0 * * * *', runScrapingCycle);
+// Ejecutar scraping cada 10 minutos (100 leads x 6 = 600/hora)
+cron.schedule('*/10 * * * *', runScrapingCycle);
 
-// Ejecutar generación IA cada 30 minutos
-cron.schedule('15,45 * * * *', runAIGenerationCycle);
+// Ejecutar generación IA cada 2 minutos (Casi instantáneo)
+cron.schedule('*/2 * * * *', runAIGenerationCycle);
 
-// Ejecutar envío de emails cada 2 horas
-cron.schedule('0 */2 * * *', runEmailCycle);
+// Ejecutar envío de emails cada 5 minutos (Flujo constante)
+cron.schedule('*/5 * * * *', runEmailCycle);
 
 // Stats cada 4 horas
 cron.schedule('0 */4 * * *', printStats);
@@ -308,7 +308,6 @@ cron.schedule('0 */4 * * *', printStats);
 cron.schedule('0 23 * * *', sendDailyReport);
 
 // Ejecutar uno inicial al arrancar
-runScrapingCycle()
-    .then(() => runAIGenerationCycle())
-    .then(() => printStats());
+runScrapingCycle();
+// Los otros ciclos arrancarán solos en <5 min
 
