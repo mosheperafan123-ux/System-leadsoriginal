@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const chalk = require('chalk');
 const GoogleMapsScraper = require('./scrapers/googlemaps_api'); // Uses API if available, fallback to Playwright
 const MessageGenerator = require('./ai/message_generator');
-const N8nEmailSender = require('./channels/n8n_sender');
+const GmailMultiAccountSender = require('./channels/gmail_oauth');
 const { initDb, db } = require('./database');
 
 // ===========================================
@@ -126,19 +126,26 @@ async function runAIGenerationCycle() {
 }
 
 async function runEmailCycle() {
-    console.log(chalk.bold.blue('\n=== CICLO DE ENVÍO ==='));
+    console.log(chalk.bold.blue('\n=== CICLO DE ENVÍO (Gmail OAuth) ==='));
 
-    const sender = new N8nEmailSender();
+    const sender = new GmailMultiAccountSender();
+
+    if (!sender.isConfigured()) {
+        console.log(chalk.yellow('⚠ Gmail no configurado. Saltando envío.'));
+        return;
+    }
+
+    // Enviar TODOS los pendientes, no solo 50
     const readyLeads = db.prepare(`
         SELECT * FROM leads 
         WHERE ai_personalized_message IS NOT NULL 
         AND email_sent = 0 
-        AND email IS NOT NULL 
-        LIMIT 50
+        AND email IS NOT NULL
     `).all();
 
     console.log(`Enviando a ${readyLeads.length} leads...`);
 
+    let sentCount = 0;
     for (const lead of readyLeads) {
         const subjectMatch = lead.ai_personalized_message.match(/Asunto:\s*(.+)/i);
         const subject = subjectMatch ? subjectMatch[1].trim() : `Oportunidad para ${lead.business_name}`;
@@ -147,14 +154,11 @@ async function runEmailCycle() {
         const sent = await sender.sendEmail(lead.email, subject, body, lead);
 
         if (!sent) {
-            console.log(chalk.yellow('🛑 Deteniendo ciclo de envíos: Límite diario alcanzado o error.'));
-            break; // Stop loop immediately
+            console.log(chalk.yellow('🛑 Límite diario alcanzado. Parando envío.'));
+            break;
         }
 
-        if (sent) {
-            // Already updated in sender, but for safety in scheduler view
-            // No need to update 'email_sent' here if sender does it, but keeping for compatibility
-        }
+        sentCount++;
 
         // Rate limit aleatorio (4-10 segundos) para evitar spam y parecer humano
         const min = 4;
@@ -164,6 +168,8 @@ async function runEmailCycle() {
         console.log(chalk.gray(`   ⏳ Esperando ${delaySeconds}s...`));
         await new Promise(r => setTimeout(r, delaySeconds * 1000));
     }
+
+    console.log(chalk.green(`✅ Ciclo de envío completado. Enviados: ${sentCount}`));
 }
 
 function printStats() {
@@ -187,7 +193,6 @@ function printStats() {
 // REPORTE DIARIO POR EMAIL
 // ===========================================
 
-const GmailMultiAccountSender = require('./channels/gmail_oauth');
 const REPORT_EMAIL = 'mosheperafan123@gmail.com';
 
 async function sendDailyReport() {
@@ -296,34 +301,40 @@ async function sendDailyReport() {
 }
 
 // ===========================================
-// PROGRAMACIÓN AUTOMÁTICA
+// CICLO PRINCIPAL LINEAL
 // ===========================================
 
-console.log(chalk.bold.cyan('🚀 Sistema de Leads iniciado (Scheduler Mode)'));
-console.log(chalk.gray('Programación:'));
-console.log('  - Scraping: cada hora (:00)');
-console.log('  - IA: cada 30 min (:15, :45)');
-console.log('  - Emails: cada 2 horas');
-console.log('  - Reporte diario: 23:00');
+// Ciclo maestro: Scrape -> AI -> Send -> Repeat (Lineal, sin paralelismo)
+async function runMainCycle() {
+    console.log(chalk.bold.cyan('\n🔄 === CICLO PRINCIPAL INICIADO ==='));
+    console.log(chalk.gray(`Hora: ${new Date().toLocaleString('es-ES')}`));
+
+    // Paso 1: Scraping
+    await runScrapingCycle();
+
+    // Paso 2: Generación IA
+    await runAIGenerationCycle();
+
+    // Paso 3: Envío de Emails (hasta terminar o alcanzar límite)
+    await runEmailCycle();
+
+    // Paso 4: Mostrar estadísticas
+    printStats();
+
+    console.log(chalk.bold.cyan('✅ === CICLO PRINCIPAL COMPLETADO ===\n'));
+}
+
+console.log(chalk.bold.cyan('🚀 Sistema de Leads iniciado (Modo Lineal)'));
+console.log(chalk.gray('Flujo: Scrape → IA → Email → Repeat (cada 15 min)'));
 
 initDb();
 
-// Ejecutar scraping cada 10 minutos (100 leads x 6 = 600/hora)
-cron.schedule('*/10 * * * *', runScrapingCycle);
-
-// Ejecutar generación IA cada 2 minutos (Casi instantáneo)
-cron.schedule('*/2 * * * *', runAIGenerationCycle);
-
-// Ejecutar envío de emails cada 5 minutos (Flujo constante)
-cron.schedule('*/5 * * * *', runEmailCycle);
-
-// Stats cada 4 horas
-cron.schedule('0 */4 * * *', printStats);
+// Ejecutar ciclo principal cada 15 minutos
+cron.schedule('*/15 * * * *', runMainCycle);
 
 // Reporte diario a las 23:00
 cron.schedule('0 23 * * *', sendDailyReport);
 
 // Ejecutar uno inicial al arrancar
-runScrapingCycle();
-// Los otros ciclos arrancarán solos en <5 min
+runMainCycle();
 
