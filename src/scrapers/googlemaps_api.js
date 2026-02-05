@@ -17,6 +17,13 @@ class GoogleMapsAPIScraper {
         this.emailFinder = null;
         this.browser = null;
         this.context = null;
+
+        // URLs de redes sociales que NO tienen emails públicos
+        this.socialMediaDomains = [
+            'instagram.com', 'facebook.com', 'fb.com', 'twitter.com', 'x.com',
+            'tiktok.com', 'linkedin.com', 'youtube.com', 'pinterest.com',
+            'wa.me', 'whatsapp.com', 't.me', 'telegram.org'
+        ];
     }
 
     async init() {
@@ -73,7 +80,9 @@ class GoogleMapsAPIScraper {
             do {
                 const requestBody = {
                     textQuery: keyword,
-                    pageSize: 20 // Max allowed per page
+                    pageSize: 20, // Max allowed per page
+                    languageCode: 'es',
+                    regionCode: 'ES' // CRÍTICO: Forzar resultados de España
                 };
 
                 if (nextPageToken) {
@@ -115,6 +124,16 @@ class GoogleMapsAPIScraper {
                         const isDuplicate = this.checkDuplicate(lead.business_name);
 
                         if (!isDuplicate) {
+                            // FILTRO: Saltar redes sociales (nunca tienen emails)
+                            const isSocialMedia = this.socialMediaDomains.some(domain =>
+                                lead.website.toLowerCase().includes(domain)
+                            );
+
+                            if (isSocialMedia) {
+                                console.log(chalk.gray(`  -> ${lead.business_name} (red social, saltando)`));
+                                continue;
+                            }
+
                             console.log(chalk.gray(`  -> Buscando email en ${lead.website}...`));
                             try {
                                 lead.email = await this.emailFinder.findEmail(lead.website);
